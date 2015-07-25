@@ -4,6 +4,7 @@ import (
     "net/http"
     "fmt"
     "database/sql"
+    "html/template"
     "github.com/gorilla/sessions"
     //"log"
 )
@@ -16,30 +17,47 @@ func main() {
 
     // Serve Mux
     http.HandleFunc("/", hello)
+    http.HandleFunc("/login", login)
+    http.HandleFunc("/authenticate", authenticate)
 
-    // Begin Serving
-    /*
-    err := http.ListenAndServe(":8080", nil)
-    if err != nil {
-        log.Fatal("ListenAndServe: ", err)
-    }
-    */
     splorin_db = Connect()
     defer Close(splorin_db)
 
-    err := AddUser(splorin_db, "cameron", "what@yo.com")
+    user := CreateNewUser("what@yo.com", "lolpass")
+    err := AddUser(splorin_db, user)
     if err != nil {
         fmt.Printf("Error adding a new user!\n")
     }
 
-    //usr := &User{}
-    usr, err := Login(splorin_db, "what@yo.com", "passss")
-    _ = usr
+    // Begin Serving
+    err = http.ListenAndServe(":8080", nil)
+    if err != nil {
+        //log.Fatal("ListenAndServe: ", err)
+        fmt.Printf("Couldn't serve!\n")
+    }
+
 
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-    fmt.Printf("void")
+    t, err := template.ParseFiles("html/login.html")
+    if err != nil {
+        fmt.Printf("void")
+    }
+
+    err = t.Execute(w, nil)
+
+    //user, err := AuthUser(splorin_db, w, r)
+    //_ = user
+}
+
+func authenticate(w http.ResponseWriter, r *http.Request) {
+    user, err := AuthUser(splorin_db, w, r)
+    if err != nil {
+        fmt.Printf("Authenticate Error: %s\n", err)
+    }
+    _ = user
+    _ = err
 }
 
 func register(w http.ResponseWriter, r *http.Request) {

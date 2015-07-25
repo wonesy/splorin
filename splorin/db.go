@@ -7,6 +7,18 @@ import (
 )
 
 /*
+    Postgres Setup
+
+    CREATE DATABASE splorin;
+
+    CREATE TABLE users (
+        id serial primary key,
+        email varchar(100) not null unique,
+        password varchar(128)
+    );
+*/
+
+/*
     Function: Connect
 
     Establishes connection to the database
@@ -59,12 +71,12 @@ func Close(db *sql.DB) {
 
         Database error
 */
-func AddUser(db *sql.DB, name string, email string) error {
-    fmt.Printf("Adding user:\n\tName: %s\n\tEmail: %s\n", name, email)
+func AddUser(db *sql.DB, user *User) error {
+    fmt.Printf("Adding user:\n\tEmail: %s\n", user.email)
 
     var lastInsertID uint64
-    err := db.QueryRow("INSERT INTO users(username,email) VALUES($1,$2) returning id;",
-        name, email).Scan(&lastInsertID)
+    err := db.QueryRow("INSERT INTO users(email,password) VALUES($1,$2) returning id;",
+        user.email, user.password).Scan(&lastInsertID)
 
     if err != nil {
         fmt.Printf("Error: %s\n", err)
@@ -93,13 +105,11 @@ func FindUser(db *sql.DB, email string) (*User, error) {
     var u User
 
     err := db.QueryRow("SELECT * FROM users WHERE email=$1;", 
-        email).Scan(&u.id, &u.username, &u.email, &u.password, &u.salt)
+        email).Scan(&u.id, &u.email, &u.password)
     if err != nil {
         fmt.Println(err)
         return &u, err
     }
-
-    fmt.Printf(u.email)
 
     return &u, err
 }

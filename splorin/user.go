@@ -3,15 +3,27 @@ package main
 import (
     "code.google.com/p/go.crypto/bcrypt"
     "database/sql"
+    "net/http"
     "fmt"
 )
 
 type User struct {
     id          int
-    username    string
     email       string
     password    []byte
-    salt        []byte
+}
+
+/*
+*/
+func CreateNewUser(email, password string) (*User) {
+    var user User
+
+    fmt.Printf("Creating new user.\n")
+
+    user.email = email
+    user.SetPassword(password)
+
+    return &user
 }
 
 /*
@@ -27,18 +39,38 @@ func (u *User) SetPassword(password string) {
 
 /*
 */
-func Login(db *sql.DB, email, password string) (*User, error) {
+func AuthUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error) {
+    session, err := store.Get(r, SESSION_PASSWORD)
+    if err != nil {
+        return nil, err
+    }
+
+    err = r.ParseForm()
+    if err != nil {
+        return nil, err
+    }
+
+    email := r.PostFormValue("email")
+    password := r.PostFormValue("password")
+
     u, err := FindUser(db, email)
     if err != nil {
-        fmt.Printf("Could not find user with that email: %s\n", email)
+        session.AddFlash("That email has not been registered.\n")
+        session.Save(r, w)
         return  nil, err
     }
 
     err = bcrypt.CompareHashAndPassword(u.password, []byte(password))
     if err != nil {
-        fmt.Printf("Could not authenticate user\n")
+        session.AddFlash("Incorrect credentials.\n")
+        session.Save(r, w)
         return nil, err
     }
+
+    session.Values["userID"] = u.id
+    session.Save(r, w)
+
+    // TODO redirect user to page they came from
 
     return u, err
 }
