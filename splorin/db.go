@@ -28,7 +28,7 @@ import (
         Pointer to the connected database
 */
 func Connect() (db *sql.DB) {
-    dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+    dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=require",
         DB_USER, DB_PASSWORD, DB_NAME)
 
     db, err := sql.Open("postgres", dbinfo)
@@ -108,7 +108,7 @@ func FindUser(db *sql.DB, email string) (*User, error) {
         email).Scan(&u.id, &u.email, &u.password)
     if err != nil {
         fmt.Println(err)
-        return &u, err
+        return nil, err
     }
 
     return &u, err

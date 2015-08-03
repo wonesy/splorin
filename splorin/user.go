@@ -37,6 +37,40 @@ func (u *User) SetPassword(password string) {
     u.password = hpass
 }
 
+func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error) {
+    session, err := store.Get(r, SESSION_PASSWORD)
+    if err != nil {
+        return nil, err
+    }
+
+    err = r.ParseForm()
+    if err != nil {
+        return nil, err
+    }
+
+    email := r.PostFormValue("email")
+    password := r.PostFormValue("password")
+
+    fmt.Printf(email)
+    
+    user, err := FindUser(db, email)
+    if user != nil {
+        session.AddFlash("That email is already registered!")
+        session.Save(r, w)
+        return nil, err
+    }
+
+    user = CreateNewUser(email, password)
+    err = AddUser(db, user)
+    if err != nil {
+        session.AddFlash("Could not add user!")
+        session.Save(r, w)
+        return nil, err
+    }
+
+    return user, err
+}
+
 /*
 */
 func AuthUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error) {
