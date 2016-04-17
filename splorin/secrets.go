@@ -9,5 +9,5 @@ const (
 
 // Session Secrets
 const (
-    SESSION_PASSWORD    = "root"
+    SESSION_PASSWORD    = "jfjfsaiihfihihhfhsfihfdhfshfeui"
 )

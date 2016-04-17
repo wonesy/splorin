@@ -38,12 +38,7 @@ func (u *User) SetPassword(password string) {
 }
 
 func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error) {
-    session, err := store.Get(r, SESSION_PASSWORD)
-    if err != nil {
-        return nil, err
-    }
-
-    err = r.ParseForm()
+    err := r.ParseForm()
     if err != nil {
         return nil, err
     }
@@ -55,16 +50,12 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, er
     
     user, err := FindUser(db, email)
     if user != nil {
-        session.AddFlash("That email is already registered!")
-        session.Save(r, w)
         return nil, err
     }
 
     user = CreateNewUser(email, password)
     err = AddUser(db, user)
     if err != nil {
-        session.AddFlash("Could not add user!")
-        session.Save(r, w)
         return nil, err
     }
 
@@ -74,12 +65,7 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, er
 /*
 */
 func AuthUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error) {
-    session, err := store.Get(r, SESSION_PASSWORD)
-    if err != nil {
-        return nil, err
-    }
-
-    err = r.ParseForm()
+    err := r.ParseForm()
     if err != nil {
         return nil, err
     }
@@ -89,22 +75,15 @@ func AuthUser(db *sql.DB, w http.ResponseWriter, r *http.Request) (*User, error)
 
     u, err := FindUser(db, email)
     if err != nil {
-        session.AddFlash("That email has not been registered.\n")
-        session.Save(r, w)
+        fmt.Printf("ERR: Could not find user")
         return  nil, err
     }
 
     err = bcrypt.CompareHashAndPassword(u.password, []byte(password))
     if err != nil {
-        session.AddFlash("Incorrect credentials.\n")
-        session.Save(r, w)
+        fmt.Printf("ERR: passwords did not match")
         return nil, err
     }
-
-    session.Values["userID"] = u.id
-    session.Save(r, w)
-
-    // TODO redirect user to page they came from
 
     return u, err
 }
